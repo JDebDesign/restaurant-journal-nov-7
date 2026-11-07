@@ -26,6 +26,7 @@ function readProfile(userId: string, email: string): Profile {
 let cached: { raw: string | null; session: Session | null } = { raw: null, session: null }
 
 export const localAuth: AuthService = {
+  async init() {},
   getSession() {
     // Stable reference between calls so useSyncExternalStore doesn't loop.
     let raw: string | null = null
@@ -54,6 +55,7 @@ export const localAuth: AuthService = {
     sessionStorage.setItem('recd:pending-email', email.trim().toLowerCase())
   },
   async completeMagicLink(email) {
+    if (!email) throw new Error('Missing email')
     const clean = email.trim().toLowerCase()
     const userId = userIdFor(clean)
     localStorage.setItem(SESSION_KEY, JSON.stringify({ userId, email: clean }))

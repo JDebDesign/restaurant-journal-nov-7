@@ -27,10 +27,13 @@ export default function Rec() {
   const [share, setShare] = useState<Share | null | undefined>(undefined)
 
   useEffect(() => {
-    journal.getShareBySlug(slug).then((s) => {
-      setShare(s)
-      if (s) void journal.recordShareView(slug)
-    })
+    journal
+      .getShareBySlug(slug)
+      .then((s) => {
+        setShare(s)
+        if (s) void journal.recordShareView(slug)
+      })
+      .catch(() => setShare(null))
   }, [slug])
 
   const payload: RecPayload | null = useMemo(() => readPayloadFromHash(hash) ?? share?.payload ?? null, [hash, share])

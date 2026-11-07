@@ -3,9 +3,9 @@
 Choices made without asking, newest scope first. Revisit any of these freely.
 
 ## Scope
-- **Front end only.** React + Vite + TypeScript (per your direction). No backend, no Next.js. Supabase comes later.
-- **Backend-shaped front end.** The UI only talks to the interfaces in `src/data/services.ts` (`AuthService`, `PlacesService`, `JournalRepo`, `PhotoStore`). `src/data/local/*` implements them with localStorage + IndexedDB. The Supabase step adds `src/data/supabase/*` and changes the 5 lines in `src/data/index.ts`.
-- **Types mirror the brief's Postgres model**, camelCased. Dishes and tag ids live on the visit object locally; in SQL they are `visit_dishes` / `visit_tags` (see `docs/schema.sql`).
+- **React + Vite + TypeScript** (per your direction), no Next.js, so there is no server of our own: Supabase is the backend.
+- **The UI only talks to the interfaces in `src/data/services.ts`** (`AuthService`, `PlacesService`, `JournalRepo`, `PhotoStore`). `src/data/index.ts` picks the implementation: Supabase when `VITE_SUPABASE_URL` is set, otherwise (or with `VITE_DATA_BACKEND=local`) the browser-storage versions in `src/data/local/*`. Local mode is kept for the demo button and so the e2e tests run offline and deterministically.
+- **Types mirror the Postgres model**, camelCased. Dishes and tag ids live on the visit object in the app; in SQL they are `visit_dishes` / `visit_tags`.
 
 ## Stack
 - **Vite 8 + React 19 + TS (strict), React Router 7 (data router), TanStack Query**: Query gives the same cache/mutation shape we want over Supabase.
@@ -36,5 +36,18 @@ Choices made without asking, newest scope first. Revisit any of these freely.
 - `src/data/fixtures/seed.ts`: 16 demo visits relative to today, 4 want-to-try items, 1 share.
 - `e2e/fixtures/*.jpg` are generated with real EXIF by `scripts/make-fixture-photos.ts`.
 
-## Deferred to the backend step
-Supabase Auth (real magic links), Postgres + RLS **and the RLS test** (`docs/schema.sql` has a starting schema and policies), Storage for photos, server-side OG images, Google Places proxy + caching, shared-link view counts, Vercel env config.
+## Supabase backend
+
+Project `uicbrhbaaksibdqmfqtc` (Restaurant Journal Nov 7). Migrations are in `supabase/migrations`.
+
+- **Auth**: real magic links (`signInWithOtp`, PKCE). `auth.init()` runs before the first render so the stored session and the `?code=` from the emailed link are handled before routes decide whether to redirect. New auth users get a `profiles` row from a trigger.
+- **RLS everywhere.** Every table has RLS on; user-owned tables are scoped to `auth.uid()`; child tables (`visit_dishes`, `visit_tags`, `share_items`) check ownership of the parent; rows that point at a visit (`visit_photos`, `want_to_try`, `share_items`) can only point at the user's own visits. `places` and `tags` are read-only reference data for signed-in users. `supabase/tests/*.sql` prove it (38 + 22 checks, all passing).
+- **Atomic edits via two functions** (`update_visit`, `convert_want`, SECURITY INVOKER so RLS still applies): autosave replaces dishes/tags in one transaction under a row lock, and the app also serialises saves per visit. Tag ids are text slugs (`date-night`) so seed data and the UI can refer to them directly; place ids are uuids.
+- **Shares without a server.** The brief says public pages read via a server route; this app has none, so there are three narrow SECURITY DEFINER functions granted to `anon` (`get_share`, `record_share_view`, `is_shared_photo`) instead of any anon table access. A share stores a snapshot of the card (`shares.payload`) so the page doesn't need joins, and `photo_paths` lists which private photos the link makes readable (via a storage policy). The security advisor flags these three as "public can execute SECURITY DEFINER"; that is intentional. Shared links are now just `/r/<slug>` (local mode still carries the card in `#d=`).
+- **Photos**: private bucket `visit-photos`, `<user id>/<photo id>.<ext>`, 10 MB limit, image types only. Displayed through 24h signed URLs. A share's photo is only readable by others when that exact path is in a share.
+- **Places stay fixture data for now**: the 41 illustrative Atlanta places are seeded into `places`; the client loads them once and searches/nearby-matches in memory. Real Google Places needs a server-side function (key can't ship in a browser) that upserts into `places`; the table already has `google_place_id` (unique) for that.
+- **Demo data in your real account**: "Load demo data" inserts the 16 sample visits, want-to-try items and a share into the signed-in user's account (skipping ones already present). "Delete all my data" removes the user's rows and photos but keeps the account.
+- **Auth settings I can't change from code**: redirect URLs and email confirmation live in the Supabase dashboard (see README). The `rls_auto_enable` function in `public` was already in the project; I left it.
+
+## Still deferred
+Google Places proxy + caching, real server-rendered Open Graph images for share links, an e2e run against a real Supabase test project (needs a test account; I was not allowed to create one), custom SMTP, Vercel deployment.

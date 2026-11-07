@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Button, LinkButton } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/fields'
-import { auth } from '@/data'
+import { auth, backend } from '@/data'
 import { DEMO_EMAIL } from '@/data/local/db'
 import { useSession } from '@/hooks/data'
 
@@ -13,6 +13,7 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
   if (session) return <Navigate to={(loc.state as { from?: string } | null)?.from ?? '/'} replace />
 
@@ -21,8 +22,15 @@ export default function SignIn() {
     const clean = email.trim()
     if (!/^\S+@\S+\.\S+$/.test(clean)) return setError('Enter a valid email address.')
     setError('')
-    await auth.requestMagicLink(clean)
-    setSent(clean)
+    setBusy(true)
+    try {
+      await auth.requestMagicLink(clean)
+      setSent(clean)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send the sign-in link. Try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -39,11 +47,15 @@ export default function SignIn() {
           <MailCheck aria-hidden="true" className="size-8 text-brand-700" />
           <p className="text-lg font-semibold">Check your email</p>
           <p className="text-muted">We sent a sign-in link to <strong>{sent}</strong>. Tap it to continue.</p>
-          <div className="rounded-xl bg-brand-50 p-3 text-sm text-muted">
-            <p className="mb-2 font-semibold text-ink">Prototype only</p>
-            <p className="mb-3">Real emails arrive with the Supabase backend. For now, open the link yourself:</p>
-            <LinkButton to={`/auth/callback?email=${encodeURIComponent(sent)}`} block>Open magic link</LinkButton>
-          </div>
+          {backend === 'local' ? (
+            <div className="rounded-xl bg-brand-50 p-3 text-sm text-muted">
+              <p className="mb-2 font-semibold text-ink">Prototype mode (no backend)</p>
+              <p className="mb-3">No email is sent in this mode. Open the link yourself:</p>
+              <LinkButton to={`/auth/callback?email=${encodeURIComponent(sent)}`} block>Open magic link</LinkButton>
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Open it on this device. It can take a minute to arrive; check spam too.</p>
+          )}
           <Button variant="ghost" onClick={() => setSent(null)}>Use a different email</Button>
         </div>
       ) : (
@@ -60,17 +72,19 @@ export default function SignIn() {
             aria-invalid={!!error}
           />
           {error && <p id="email-error" role="alert" className="text-sm font-medium text-red-800">{error}</p>}
-          <Button type="submit" size="lg" block>Email me a sign-in link</Button>
-          <Button
-            variant="ghost"
-            block
-            onClick={async () => {
-              await auth.requestMagicLink(DEMO_EMAIL)
-              await auth.completeMagicLink(DEMO_EMAIL)
-            }}
-          >
-            Try the demo journal
-          </Button>
+          <Button type="submit" size="lg" block disabled={busy}>{busy ? 'Sending…' : 'Email me a sign-in link'}</Button>
+          {backend === 'local' && (
+            <Button
+              variant="ghost"
+              block
+              onClick={async () => {
+                await auth.requestMagicLink(DEMO_EMAIL)
+                await auth.completeMagicLink(DEMO_EMAIL)
+              }}
+            >
+              Try the demo journal
+            </Button>
+          )}
         </form>
       )}
     </main>

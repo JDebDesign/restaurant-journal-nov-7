@@ -7,12 +7,14 @@ import type {
 } from './types'
 
 export interface AuthService {
+  /** Resolves once the stored session (and any magic-link code in the URL) has been processed. Await before first render. */
+  init(): Promise<void>
   getSession(): Session | null
   subscribe(cb: () => void): () => void
-  /** Sends a magic link (stubbed locally; resolves immediately). */
+  /** Emails a magic link (stubbed locally; resolves immediately). Rejects with a readable message on failure. */
   requestMagicLink(email: string): Promise<void>
-  /** Called by /auth/callback. Locally this trusts the email query param. */
-  completeMagicLink(email: string): Promise<Session>
+  /** Called by /auth/callback. Locally this trusts the email query param; with Supabase the code was already exchanged in init(). */
+  completeMagicLink(email?: string): Promise<Session>
   signOut(): Promise<void>
   updateProfile(patch: Partial<Profile>): Promise<Session>
 }

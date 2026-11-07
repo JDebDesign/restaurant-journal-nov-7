@@ -1,6 +1,6 @@
 # Recd
 
-A restaurant journal that makes logging effortless and recommending instant. Mobile-first PWA built with React, Vite and TypeScript. **Front end only for now**: data is stored in your browser, and Supabase comes later (see `DECISIONS.md`).
+A restaurant journal that makes logging effortless and recommending instant. Mobile-first PWA built with React, Vite and TypeScript, backed by Supabase (Auth, Postgres with row-level security, Storage). Without Supabase env vars it falls back to a browser-only demo mode (see `DECISIONS.md`).
 
 ## Run it
 
@@ -8,12 +8,19 @@ Requires Node 20+.
 
 ```bash
 npm install
+cp .env.example .env.local   # then fill in your Supabase URL and publishable key
 npm run dev
 ```
 
-Open http://localhost:5173 and tap **Try the demo journal**, or enter any email (then tap **Open magic link**, which stands in for the real email). `alanna@example.com` comes with 16 demo visits; other emails start empty (Settings has **Load demo data**).
+Open http://localhost:5173, enter your email and open the magic link from your inbox. Once signed in, **Home > Load demo data** (or Settings) fills your journal with 16 sample Atlanta visits.
 
-Tip: use your browser's device toolbar at 375px wide.
+**No Supabase configured?** Leave `.env.local` empty (or set `VITE_DATA_BACKEND=local`) and the app runs entirely in your browser with fixture data: the sign-in screen gets a "Try the demo journal" button and the magic link is a button on screen.
+
+### Supabase setup (one time)
+
+1. Apply `supabase/migrations/*.sql` in order (SQL editor, `supabase db push`, or the MCP `apply_migration` tool). They create the tables, row-level security, the private `visit-photos` bucket, helper functions and seed 41 places + 11 tags.
+2. **Authentication > URL Configuration**: add `http://localhost:5173/**` (and your deployed URL) to **Redirect URLs**, or magic links will send people to the Site URL instead.
+3. Optional: **Authentication > Sign In / Providers > Email**: "Confirm email" only affects password sign-ups; magic links always require clicking the emailed link. The built-in mailer is heavily rate limited (a few emails per hour); add custom SMTP before sharing the app.
 
 ## Scripts
 
@@ -22,7 +29,7 @@ Tip: use your browser's device toolbar at 375px wide.
 | `npm run dev` | Dev server |
 | `npm run build` / `npm run preview` | Production build / serve it on :4173 |
 | `npm test` | Unit tests (Vitest): recs ordering, filters, EXIF-to-place matching, share payloads |
-| `npm run test:e2e` | Playwright at 375px: log a visit, photo GPS/no-GPS, convert want-to-try, find a rec, logged-out share link, layout, a11y (axe), PWA |
+| `npm run test:e2e` | Playwright at 375px (always runs in local mode, no Supabase needed): log a visit, photo GPS/no-GPS, convert want-to-try, find a rec, logged-out share link, layout, a11y (axe), PWA |
 | `npm run lint` | oxlint |
 | `npx tsx scripts/make-fixture-photos.ts` | Regenerate the EXIF test photos |
 | `npx tsx scripts/make-icons.ts` | Regenerate placeholder PWA icons |
@@ -43,28 +50,32 @@ First time running e2e: `npx playwright install chromium`.
 
 ```
 src/data/services.ts     contracts the UI depends on (swap point for Supabase)
-src/data/local/          localStorage + IndexedDB implementations
+src/data/local/          localStorage + IndexedDB implementations (demo / test mode)
 src/data/fixtures/       Atlanta places, tags, demo seed
 src/lib/                 pure logic: recs, filters, exif, share, geo
 src/pages, components/   UI
-docs/schema.sql          reference Postgres schema + RLS for the backend step
 e2e/, tests/unit/        tests
 ```
 
-## Moving to Supabase later
+## Backend
 
-1. Create a Supabase project, apply `docs/schema.sql` as a migration, add a seed script from `src/data/fixtures`.
-2. Write `src/data/supabase/{auth,places,journal,photos}.ts` implementing the interfaces in `src/data/services.ts`; point `src/data/index.ts` at them. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
-3. Keep the Google Places key server-side (Edge Function): search/nearby/details, cached into `places`.
-4. Serve `/r/:slug` with real OG tags and an `og:image` (render `/r/:slug/card`, or port it to `@vercel/og`) and read share content from the DB.
-5. Add the RLS test (sign in as two users, assert no cross-user reads or writes).
+```
+supabase/migrations/   schema, RLS + storage policies, functions, seed data (apply in order)
+supabase/tests/rls.sql        two users must never see or change each other's rows (+ logged-out visitor checks)
+supabase/tests/functions.sql  signup trigger, update_visit, convert_want, constraints, delete behaviour
+src/data/supabase/     implementations of the interfaces in src/data/services.ts
+```
+
+Run the two SQL tests in the Supabase SQL editor. Each ends by raising `RLS_TESTS_PASSED (N checks)` / `FUNCTIONAL_TESTS_PASSED (N checks)` on purpose so everything they create is rolled back; any other message names the failing check.
+
+Still to do: Google Places via a server-side function (key must not ship in the browser), real Open Graph images for `/r/:slug` (crawlers don't run JavaScript), and a Playwright run against a real Supabase test project.
 
 ## Deploy (static)
 
-Any static host works. On Vercel: framework preset **Vite**, build `npm run build`, output `dist`, plus a rewrite of all paths to `/index.html` for client routing:
+Any static host works. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the host's environment (they are public, browser-safe values) and add the deployed URL to Supabase **Redirect URLs**. On Vercel: framework preset **Vite**, build `npm run build`, output `dist`, plus a rewrite of all paths to `/index.html` for client routing:
 
 ```json
 { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
 ```
 
-Save that as `vercel.json`. No environment variables are needed yet.
+That rewrite is already in `vercel.json`.

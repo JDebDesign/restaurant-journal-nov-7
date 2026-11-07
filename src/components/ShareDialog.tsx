@@ -1,6 +1,6 @@
 import { Check, Copy, Share2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { journal, photos } from '@/data'
+import { backend, journal, photos } from '@/data'
 import type { Place, Visit } from '@/data'
 import { downscale } from '@/lib/image'
 import { shareUrl, toRecItem } from '@/lib/share'
@@ -54,7 +54,8 @@ export function useShareDialog() {
           thumbs,
         })
         setCopied(false)
-        setState({ url: shareUrl(window.location.origin, s.slug, payload), title: t })
+        // With a database the link is just the slug; in local mode the card travels in the URL hash.
+        setState({ url: backend === 'supabase' ? `${window.location.origin}/r/${s.slug}` : shareUrl(window.location.origin, s.slug, payload), title: t })
       } catch {
         toast('Could not create the link. Try again.')
       } finally {
