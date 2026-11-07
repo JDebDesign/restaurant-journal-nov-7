@@ -91,6 +91,10 @@ export interface Share {
   createdAt: string
   viewCount: number
   items: ShareItem[]
+  /** Self-contained card content; the public page reads this (a DB join once there is a backend). */
+  payload?: RecPayload
+  /** Small data-URL thumbnails per item. Only shown where the share record is reachable. */
+  thumbs?: (string | null)[]
 }
 
 /** Everything the public rec card needs. Self-contained so it can travel inside a URL. */

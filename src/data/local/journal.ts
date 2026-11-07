@@ -80,9 +80,9 @@ export const localJournal: JournalRepo = {
   async listShares() {
     return [...readDB().shares].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   },
-  async createShare({ title, items }) {
+  async createShare({ title, items, payload, thumbs }) {
     return update((db) => {
-      const s = { id: uid(), slug: shortSlug(), title, createdAt: now(), viewCount: 0, items }
+      const s = { id: uid(), slug: shortSlug(), title, createdAt: now(), viewCount: 0, items, payload, thumbs }
       db.shares.push(s)
       publishShare(s)
       return s

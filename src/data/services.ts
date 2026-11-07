@@ -3,7 +3,7 @@
 // the same interfaces; no page or component should import from `data/local` directly.
 
 import type {
-  PhotoMeta, Place, Profile, Session, Share, ShareItem, SourceType, Tag, Visit, VisitPatch, WantToTry,
+  PhotoMeta, Place, Profile, RecPayload, Session, Share, ShareItem, SourceType, Tag, Visit, VisitPatch, WantToTry,
 } from './types'
 
 export interface AuthService {
@@ -47,7 +47,7 @@ export interface JournalRepo {
   convertWant(id: string): Promise<Visit>
 
   listShares(): Promise<Share[]>
-  createShare(input: { title: string; items: ShareItem[] }): Promise<Share>
+  createShare(input: { title: string; items: ShareItem[]; payload: RecPayload; thumbs?: (string | null)[] }): Promise<Share>
   getShareBySlug(slug: string): Promise<Share | null>
   recordShareView(slug: string): Promise<void>
 
