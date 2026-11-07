@@ -47,7 +47,7 @@ export default function Asked() {
           <p className="mb-1 text-sm font-semibold">Occasion</p>
           <ChipGroup label="Occasion">
             {tags.filter((t) => t.kind === 'occasion').map((t) => (
-              <Chip key={t.id} pressed={q.occasion === t.id} onClick={() => setQ({ ...q, occasion: q.occasion === t.id ? null : t.id })}>{t.label}</Chip>
+              <Chip key={t.id} pressed={q.occasion === t.id} onClick={() => setQ((p) => ({ ...p, occasion: p.occasion === t.id ? null : t.id }))}>{t.label}</Chip>
             ))}
           </ChipGroup>
         </div>
@@ -55,7 +55,7 @@ export default function Asked() {
           <p className="mb-1 text-sm font-semibold">Price</p>
           <ChipGroup label="Price">
             {PRICES.map((p: PriceLevel) => (
-              <Chip key={p} pressed={q.price === p} onClick={() => setQ({ ...q, price: q.price === p ? null : p })} aria-label={`${p} of 4 dollar signs`}>{priceStr(p)}</Chip>
+              <Chip key={p} pressed={q.price === p} onClick={() => setQ((prev) => ({ ...prev, price: prev.price === p ? null : p }))} aria-label={`${p} of 4 dollar signs`}>{priceStr(p)}</Chip>
             ))}
           </ChipGroup>
         </div>
@@ -63,7 +63,7 @@ export default function Asked() {
           <p className="mb-1 text-sm font-semibold">Area</p>
           <ChipGroup label="Area">
             {areas.map((a) => (
-              <Chip key={a} pressed={q.area === a} onClick={() => setQ({ ...q, area: q.area === a ? null : a })}>{a}</Chip>
+              <Chip key={a} pressed={q.area === a} onClick={() => setQ((p) => ({ ...p, area: p.area === a ? null : a }))}>{a}</Chip>
             ))}
           </ChipGroup>
         </div>

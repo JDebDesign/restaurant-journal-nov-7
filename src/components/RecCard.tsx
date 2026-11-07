@@ -49,7 +49,7 @@ export function RecCard({ item, photo, index }: { item: RecItem; photo?: string 
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <ExternalLink href={item.mapsUrl}><MapIcon aria-hidden="true" className="size-4" /> Open in Maps</ExternalLink>
+          <ExternalLink href={item.mapsUrl} className="gap-1.5 px-2 whitespace-nowrap"><MapIcon aria-hidden="true" className="size-4 shrink-0" /> Open in Maps</ExternalLink>
           <ExternalLink href={item.reserveUrl} variant="primary">Reserve</ExternalLink>
         </div>
       </div>

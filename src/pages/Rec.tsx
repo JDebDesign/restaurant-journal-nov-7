@@ -6,6 +6,18 @@ import { journal } from '@/data'
 import type { RecPayload, Share } from '@/data'
 import { readPayloadFromHash } from '@/lib/share'
 
+/** True the first time this browser session opens a link, so reloads and React's dev double-run don't inflate view counts. */
+function markViewed(slug: string): boolean {
+  const key = `recd:viewed:${slug}`
+  try {
+    if (sessionStorage.getItem(key)) return false
+    sessionStorage.setItem(key, '1')
+  } catch {
+    /* storage blocked: count it */
+  }
+  return true
+}
+
 function setMeta(name: string, content: string, attr: 'name' | 'property' = 'property') {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${name}"]`)
   if (!el) {
@@ -31,7 +43,7 @@ export default function Rec() {
       .getShareBySlug(slug)
       .then((s) => {
         setShare(s)
-        if (s) void journal.recordShareView(slug)
+        if (s && markViewed(slug)) void journal.recordShareView(slug)
       })
       .catch(() => setShare(null))
   }, [slug])
