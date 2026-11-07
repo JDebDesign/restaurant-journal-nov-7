@@ -6,7 +6,7 @@ export function FeelingBadge({ feeling, className }: { feeling: Feeling | null; 
   const m = feelingMeta(feeling)
   if (!m) return null
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold', m.badge, className)}>
+    <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap', m.badge, className)}>
       <span aria-hidden="true">{m.emoji}</span>
       {m.label}
     </span>
