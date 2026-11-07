@@ -1,7 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import Asked from './pages/Asked'
-import AuthCallback from './pages/AuthCallback'
 import Home from './pages/Home'
 import Log from './pages/Log'
 import Places from './pages/Places'
@@ -14,7 +13,6 @@ import Want from './pages/Want'
 
 export const router = createBrowserRouter([
   { path: '/sign-in', element: <SignIn /> },
-  { path: '/auth/callback', element: <AuthCallback /> },
   // Public, no account needed
   { path: '/r/:slug', element: <Rec /> },
   { path: '/r/:slug/card', element: <RecOgCard /> },

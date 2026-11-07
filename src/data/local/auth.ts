@@ -1,11 +1,29 @@
+// Browser-only auth for demo mode and e2e tests. Accounts live in localStorage and never leave the
+// device. The password hash is NOT a security boundary here; real auth is the Supabase implementation.
 import type { AuthService } from '../services'
 import type { Profile, Session } from '../types'
-import { SESSION_KEY, userIdFor } from './db'
+import { DEMO_EMAIL, SESSION_KEY, userIdFor } from './db'
 
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 
 const PROFILE_KEY = (userId: string) => `recd:profile:${userId}`
+const USERS_KEY = 'recd:users'
+
+type Users = Record<string, { userId: string; hash: string }>
+const readUsers = (): Users => {
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+async function hash(email: string, password: string): Promise<string> {
+  const bytes = new TextEncoder().encode(`${email}\u0000${password}`)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
+}
 
 function defaultProfile(email: string): Profile {
   const local = email.split('@')[0] ?? ''
@@ -24,6 +42,11 @@ function readProfile(userId: string, email: string): Profile {
 }
 
 let cached: { raw: string | null; session: Session | null } = { raw: null, session: null }
+
+function startSession(email: string) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: userIdFor(email), email }))
+  emit()
+}
 
 export const localAuth: AuthService = {
   async init() {},
@@ -50,18 +73,23 @@ export const localAuth: AuthService = {
     listeners.add(cb)
     return () => listeners.delete(cb)
   },
-  async requestMagicLink(email) {
-    // Backend step: supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } })
-    sessionStorage.setItem('recd:pending-email', email.trim().toLowerCase())
-  },
-  async completeMagicLink(email) {
-    if (!email) throw new Error('Missing email')
+  async signUp(email, password) {
     const clean = email.trim().toLowerCase()
-    const userId = userIdFor(clean)
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ userId, email: clean }))
-    sessionStorage.removeItem('recd:pending-email')
-    emit()
-    return localAuth.getSession()!
+    const users = readUsers()
+    if (users[clean] || clean === DEMO_EMAIL) throw new Error('An account with this email already exists. Try signing in.')
+    users[clean] = { userId: userIdFor(clean), hash: await hash(clean, password) }
+    localStorage.setItem(USERS_KEY, JSON.stringify(users))
+    startSession(clean)
+    return { needsConfirmation: false }
+  },
+  async signIn(email, password) {
+    const clean = email.trim().toLowerCase()
+    const u = readUsers()[clean]
+    if (!u || u.hash !== (await hash(clean, password))) throw new Error('Incorrect email or password.')
+    startSession(clean)
+  },
+  async signInAsDemo() {
+    startSession(DEMO_EMAIL)
   },
   async signOut() {
     localStorage.removeItem(SESSION_KEY)

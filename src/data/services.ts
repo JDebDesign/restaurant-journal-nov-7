@@ -7,14 +7,19 @@ import type {
 } from './types'
 
 export interface AuthService {
-  /** Resolves once the stored session (and any magic-link code in the URL) has been processed. Await before first render. */
+  /** Resolves once the stored session (and any email-confirmation code in the URL) has been processed. Await before first render. */
   init(): Promise<void>
   getSession(): Session | null
   subscribe(cb: () => void): () => void
-  /** Emails a magic link (stubbed locally; resolves immediately). Rejects with a readable message on failure. */
-  requestMagicLink(email: string): Promise<void>
-  /** Called by /auth/callback. Locally this trusts the email query param; with Supabase the code was already exchanged in init(). */
-  completeMagicLink(email?: string): Promise<Session>
+  /**
+   * Creates an account and signs in. Resolves `needsConfirmation: true` (and no session) when the
+   * backend requires the email to be confirmed first. Rejects with a readable message.
+   */
+  signUp(email: string, password: string): Promise<{ needsConfirmation: boolean }>
+  /** Rejects with a readable message ("Incorrect email or password.") on failure. */
+  signIn(email: string, password: string): Promise<void>
+  /** Local demo mode only: sign in as the pre-seeded demo user without a password. */
+  signInAsDemo?(): Promise<void>
   signOut(): Promise<void>
   updateProfile(patch: Partial<Profile>): Promise<Session>
 }

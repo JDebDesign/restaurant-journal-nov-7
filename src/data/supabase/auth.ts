@@ -2,6 +2,16 @@ import type { AuthService } from '../services'
 import type { Session } from '../types'
 import { supabase } from './client'
 
+function friendly(message: string): string {
+  const m = message.toLowerCase()
+  if (m.includes('invalid login credentials')) return 'Incorrect email or password.'
+  if (m.includes('already registered')) return 'An account with this email already exists. Try signing in.'
+  if (m.includes('email not confirmed')) return 'Confirm your email first: open the link we sent you, then sign in.'
+  if (m.includes('rate limit') || m.includes('too many')) return 'Too many attempts. Wait a minute and try again.'
+  if (m.includes('password') && m.includes('characters')) return message
+  return message
+}
+
 let session: Session | null = null
 let started: Promise<void> | null = null
 const listeners = new Set<() => void>()
@@ -23,7 +33,7 @@ async function load(userId: string | null, email: string | null): Promise<void> 
 export const supabaseAuth: AuthService = {
   init() {
     started ??= (async () => {
-      // Also completes a magic-link sign-in: supabase-js exchanges ?code= from the URL here.
+      // Restores the stored session; also finishes an email-confirmation link (supabase-js exchanges ?code= from the URL here).
       const { data } = await supabase.auth.getSession()
       await load(data.session?.user.id ?? null, data.session?.user.email ?? null)
       supabase.auth.onAuthStateChange((event, s) => {
@@ -42,17 +52,26 @@ export const supabaseAuth: AuthService = {
     listeners.add(cb)
     return () => listeners.delete(cb)
   },
-  async requestMagicLink(email) {
-    const { error } = await supabase.auth.signInWithOtp({
+  async signUp(email, password) {
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback`, shouldCreateUser: true },
+      password,
+      // Where the confirmation link lands if the project requires confirmed emails; init() exchanges its code.
+      options: { emailRedirectTo: window.location.origin },
     })
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(friendly(error.message))
+    // With confirmation on, an already-registered email comes back as a user with no identities.
+    if (data.user && data.user.identities?.length === 0) throw new Error('An account with this email already exists. Try signing in.')
+    if (!data.session) return { needsConfirmation: true }
+    await load(data.session.user.id, data.session.user.email ?? null)
+    emit()
+    return { needsConfirmation: false }
   },
-  async completeMagicLink() {
-    // The code exchange already happened in init(); this just reports the result.
-    if (!session) throw new Error('This sign-in link is invalid or has expired.')
-    return session
+  async signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (error) throw new Error(friendly(error.message))
+    await load(data.user.id, data.user.email ?? null)
+    emit()
   },
   async signOut() {
     await supabase.auth.signOut()

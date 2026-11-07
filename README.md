@@ -12,15 +12,15 @@ cp .env.example .env.local   # then fill in your Supabase URL and publishable ke
 npm run dev
 ```
 
-Open http://localhost:5173, enter your email and open the magic link from your inbox. Once signed in, **Home > Load demo data** (or Settings) fills your journal with 16 sample Atlanta visits.
+Open http://localhost:5173, tap **Create account**, and sign up with an email and a password (8+ characters). Once signed in, **Home > Load demo data** (or Settings) fills your journal with 16 sample Atlanta visits.
 
-**No Supabase configured?** Leave `.env.local` empty (or set `VITE_DATA_BACKEND=local`) and the app runs entirely in your browser with fixture data: the sign-in screen gets a "Try the demo journal" button and the magic link is a button on screen.
+**No Supabase configured?** Leave `.env.local` empty (or set `VITE_DATA_BACKEND=local`) and the app runs entirely in your browser with fixture data: accounts are stored only in your browser (not secure, for demos and tests), and the sign-in screen gets a "Try the demo journal" button.
 
 ### Supabase setup (one time)
 
 1. Apply `supabase/migrations/*.sql` in order (SQL editor, `supabase db push`, or the MCP `apply_migration` tool). They create the tables, row-level security, the private `visit-photos` bucket, helper functions and seed 41 places + 11 tags.
-2. **Authentication > URL Configuration**: add `http://localhost:5173/**` (and your deployed URL) to **Redirect URLs**, or magic links will send people to the Site URL instead.
-3. Optional: **Authentication > Sign In / Providers > Email**: "Confirm email" only affects password sign-ups; magic links always require clicking the emailed link. The built-in mailer is heavily rate limited (a few emails per hour); add custom SMTP before sharing the app.
+2. **Authentication > Sign In / Providers > Email** must be enabled (it is by default). With **Confirm email** off, new accounts sign straight in; with it on, the app shows a "Confirm your email" screen and the link must be allowed under **Authentication > URL Configuration > Redirect URLs** (add `http://localhost:5173/**` and your deployed URL). The built-in mailer is heavily rate limited, so add custom SMTP before turning confirmation on for real users.
+3. There is no "forgot password" flow yet.
 
 ## Scripts
 
@@ -68,7 +68,7 @@ src/data/supabase/     implementations of the interfaces in src/data/services.ts
 
 Run the two SQL tests in the Supabase SQL editor. Each ends by raising `RLS_TESTS_PASSED (N checks)` / `FUNCTIONAL_TESTS_PASSED (N checks)` on purpose so everything they create is rolled back; any other message names the failing check.
 
-Still to do: Google Places via a server-side function (key must not ship in the browser), real Open Graph images for `/r/:slug` (crawlers don't run JavaScript), and a Playwright run against a real Supabase test project.
+Still to do: password reset, Google Places via a server-side function (key must not ship in the browser), real Open Graph images for `/r/:slug` (crawlers don't run JavaScript), and a Playwright run against a real Supabase test project.
 
 ## Deploy (static)
 

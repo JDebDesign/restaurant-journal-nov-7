@@ -12,7 +12,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30
 
 registerSW({ immediate: true })
 
-// Restore the stored session (and finish any magic-link sign-in) before the first render so routes don't flash the sign-in page.
+// Restore the stored session (and finish any email-confirmation link) before the first render so routes don't flash the sign-in page.
 await auth.init()
 
 createRoot(document.getElementById('root')!).render(
