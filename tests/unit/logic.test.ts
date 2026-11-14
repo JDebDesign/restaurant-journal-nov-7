@@ -139,3 +139,19 @@ describe('share payload', () => {
     expect(decodePayload(encodePayload({ v: 2 } as never))).toBeNull()
   })
 })
+
+describe('uuid fallback (insecure context, e.g. phone on http://lan-ip)', () => {
+  it('produces valid, unique v4 UUIDs without crypto.randomUUID', async () => {
+    const { uuid } = await import('@/lib/uuid')
+    const original = crypto.randomUUID
+    // @ts-expect-error simulate an insecure context
+    crypto.randomUUID = undefined
+    try {
+      const ids = Array.from({ length: 200 }, () => uuid())
+      expect(new Set(ids).size).toBe(200)
+      for (const id of ids) expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    } finally {
+      crypto.randomUUID = original
+    }
+  })
+})

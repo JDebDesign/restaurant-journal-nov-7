@@ -1,4 +1,5 @@
 // Tiny localStorage-backed "database", scoped per signed-in user.
+import { uuid } from '@/lib/uuid'
 import { buildDemoData } from '../fixtures/seed'
 import type { PhotoMeta, Share, Visit, WantToTry } from '../types'
 
@@ -58,7 +59,7 @@ export function update<T>(fn: (db: DB) => T): T {
   return out
 }
 
-export const uid = () => crypto.randomUUID()
+export const uid = uuid
 
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
 export function shortSlug(len = 8) {

@@ -1,3 +1,4 @@
+import { uuid } from '@/lib/uuid'
 import type { PhotoStore } from '../services'
 import type { PhotoMeta } from '../types'
 import { PHOTO_BUCKET, requireUserId, supabase, unwrap } from './client'
@@ -23,7 +24,7 @@ const urls = new Map<string, { url: string; expires: number }>()
 export const supabasePhotos: PhotoStore = {
   async add(blob, meta) {
     const userId = await requireUserId()
-    const id = crypto.randomUUID()
+    const id = uuid()
     const type = blob.type || 'image/jpeg'
     const path = `${userId}/${id}.${EXT[type] ?? 'jpg'}`
     const up = await supabase.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: type })
