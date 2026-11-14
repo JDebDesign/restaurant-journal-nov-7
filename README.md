@@ -1,6 +1,29 @@
+<p align="center">
+  <img src="docs/images/cover.png" alt="Restaurant Journal: your dining story starts here" width="100%">
+</p>
+
 # Recd
 
-A restaurant journal that makes logging effortless and recommending instant. Mobile-first PWA built with React, Vite and TypeScript, backed by Supabase (Auth, Postgres with row-level security, Storage). Without Supabase env vars it falls back to a browser-only demo mode (see `DECISIONS.md`).
+**Remember every restaurant you've been to, and turn that memory into a great rec for a friend in seconds.**
+
+A mobile-first PWA built with React, Vite and TypeScript, backed by Supabase (Auth, Postgres with row-level security, Storage). Log a meal in a few taps, add a photo and let its GPS find the restaurant, then answer "where should we eat?" with your own best-loved places. Without Supabase env vars it falls back to a browser-only demo mode (see `DECISIONS.md`).
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/images/screens/home.png" alt="Home screen with Log a meal, Someone asked me and recent visits" width="250"><br><sub><b>Home</b><br>One big button to log, one to recommend</sub></td>
+    <td align="center" width="33%"><img src="docs/images/screens/log-photo.png" alt="Photo suggestions: Is this where you ate?" width="250"><br><sub><b>Photo-first logging</b><br>The photo's GPS suggests where you ate</sub></td>
+    <td align="center" width="33%"><img src="docs/images/screens/visit.png" alt="Visit details with feeling, standout dishes and occasion tags" width="250"><br><sub><b>Visit details</b><br>Feeling, what to order, occasion and vibe. Autosaves</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="docs/images/screens/places.png" alt="My places journal with search and filters" width="250"><br><sub><b>My places</b><br>Search names, dishes and notes, filter by context</sub></td>
+    <td align="center" width="33%"><img src="docs/images/screens/asked.png" alt="Someone asked me: ranked recommendations for date night" width="250"><br><sub><b>Someone asked me</b><br>Best-loved, most recent matches for any occasion</sub></td>
+    <td align="center" width="33%"><img src="docs/images/screens/share.png" alt="Public rec card a friend can open without an account" width="250"><br><sub><b>Shareable rec card</b><br>A friend opens it with no account</sub></td>
+  </tr>
+</table>
+
+<sub>Screenshots are from the browser-only demo mode with sample Atlanta data. Regenerate them with `npm run dev:demo` and the steps in `docs/images/README.md`.</sub>
 
 ## Run it
 
