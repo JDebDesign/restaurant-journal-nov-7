@@ -24,3 +24,60 @@ body {
 }
 button, a, input, select, textarea { font: inherit; }
 :focus-visible { outline: 2px solid var(--color-brand-700); outline-offset: 2px; }
+
+/*
+ * Log button pressed state. Motion from Figma "Recd app screens" > TabBar (circle 9:21, plus icon 9:22):
+ * a 2s timeline played once per press. Keyframe times/values/easings are copied from the Figma motion
+ * data; "easeOut" / "easeInOut" are motion.dev's named curves. Individual transform properties
+ * (scale / translate / rotate) let the pop, lift and spin run as independent tracks with their own times.
+ */
+:root {
+  --press-ease-out: cubic-bezier(0, 0, 0.58, 1);
+  --press-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+@keyframes log-press-scale {
+  0% { scale: 1 1; animation-timing-function: var(--press-ease-out); }
+  4% { scale: 1.06 0.96; animation-timing-function: var(--press-ease-out); }
+  11.5% { scale: 1.13 1.13; animation-timing-function: var(--press-ease-in-out); }
+  20% { scale: 1.08 1.08; animation-timing-function: linear; }
+  42.5% { scale: 1.08 1.08; animation-timing-function: var(--press-ease-in-out); }
+  54% { scale: 1 1; animation-timing-function: linear; }
+  100% { scale: 1 1; }
+}
+
+@keyframes log-press-lift {
+  0% { translate: 0 0; animation-timing-function: var(--press-ease-out); }
+  11.5% { translate: 0 -3px; animation-timing-function: var(--press-ease-in-out); }
+  20% { translate: 0 -2px; animation-timing-function: linear; }
+  42.5% { translate: 0 -2px; animation-timing-function: var(--press-ease-in-out); }
+  54% { translate: 0 0; animation-timing-function: linear; }
+  100% { translate: 0 0; }
+}
+
+@keyframes log-press-spin {
+  0% { rotate: 0deg; animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  5% { rotate: 0deg; animation-timing-function: var(--press-ease-out); }
+  14% { rotate: 100deg; animation-timing-function: var(--press-ease-in-out); }
+  22% { rotate: 90deg; animation-timing-function: linear; }
+  42.5% { rotate: 90deg; animation-timing-function: var(--press-ease-in-out); }
+  54% { rotate: 0deg; animation-timing-function: linear; }
+  100% { rotate: 0deg; }
+}
+
+.press-pop.is-pressed {
+  transform-origin: 50% 50%;
+  animation: log-press-scale 2s 1 both, log-press-lift 2s 1 both;
+}
+
+.press-spin.is-pressed {
+  transform-origin: 50% 50%;
+  animation: log-press-spin 2s 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press-pop.is-pressed,
+  .press-spin.is-pressed {
+    animation: none;
+  }
+}
