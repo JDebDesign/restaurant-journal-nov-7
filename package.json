@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "dev:host": "vite --host"
+    "dev:host": "vite --host",
+    "dev:demo": "vite --mode demo --port 5174 --strictPort"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

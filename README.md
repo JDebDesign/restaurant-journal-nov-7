@@ -16,6 +16,8 @@ Open http://localhost:5173, tap **Create account**, and sign up with an email an
 
 **No Supabase configured?** Leave `.env.local` empty (or set `VITE_DATA_BACKEND=local`) and the app runs entirely in your browser with fixture data: accounts are stored only in your browser (not secure, for demos and tests), and the sign-in screen gets a "Try the demo journal" button.
 
+**Demo mode on its own port:** `npm run dev:demo` serves the browser-only version at http://localhost:5174 (separate from your Supabase-backed dev server), handy for screenshots and design handoff.
+
 ### Supabase setup (one time)
 
 1. Apply `supabase/migrations/*.sql` in order (SQL editor, `supabase db push`, or the MCP `apply_migration` tool). They create the tables, row-level security, the private `visit-photos` bucket, helper functions and seed 41 places + 11 tags.

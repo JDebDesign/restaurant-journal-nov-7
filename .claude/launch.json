@@ -14,6 +14,15 @@
         "--strictPort"
       ],
       "port": 5173
+    },
+    {
+      "name": "recd-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:demo"
+      ],
+      "port": 5174
     }
   ]
 }
