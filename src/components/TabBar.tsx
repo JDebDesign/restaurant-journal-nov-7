@@ -2,6 +2,8 @@ import { BookOpen, Bookmark, Home, Plus, Settings } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 
+// Design: Figma "Recd app screens" > TabBar (node 9:2). The center "Log" action is an
+// icon-only 44px circle, so its accessible name comes from aria-label.
 const tabs = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/places', label: 'Places', icon: BookOpen },
@@ -19,21 +21,24 @@ export function TabBar() {
             <NavLink
               to={to}
               end={end}
+              aria-label={primary ? label : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex h-16 flex-col items-center justify-center gap-0.5 px-1 text-xs font-semibold',
+                  'flex h-16 flex-col items-center justify-center gap-0.5 px-1',
                   isActive ? 'text-brand-700' : 'text-muted',
                 )
               }
             >
               {primary ? (
-                <span className="-my-1.5 flex size-8 items-center justify-center rounded-full bg-brand-700 text-white">
-                  <Icon aria-hidden="true" className="size-5" />
+                <span className="flex size-11 items-center justify-center rounded-full bg-brand-700 text-white">
+                  <Icon aria-hidden="true" className="size-[27.5px]" />
                 </span>
               ) : (
-                <Icon aria-hidden="true" className="size-5" />
+                <>
+                  <Icon aria-hidden="true" className="size-5" />
+                  <span className="h-6 text-base leading-6 font-normal whitespace-nowrap">{label}</span>
+                </>
               )}
-              <span className="max-w-full truncate">{label}</span>
             </NavLink>
           </li>
         ))}
